@@ -1,0 +1,5 @@
+{
+  "name": "Escritoire",
+  "description": "A high-performance, fire-and-forget note-taking application powered by Gemini AI for automated categorization and summarization, featuring an Obsidian bridge for seamless knowledge management.",
+  "requestFramePermissions": []
+}

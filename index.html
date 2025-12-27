@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Escritoire</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#221716">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Escritoire">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Escritoire">
+    
+    <!-- Favicons & Touch Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="resources/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="resources/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="resources/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="resources/icon-192x192.png">
+    
+    <link rel="manifest" href="manifest.json">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Sans Flex & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,slnt,wdth,wght,GRAD,ROND@6..144,-10..0,25..151,1..1000,0..100,0..100&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..160" />
+    
+    <style>
+        html {
+            height: 100%;
+            width: 100%;
+        }
+        body {
+            font-family: "Google Sans Flex", sans-serif;
+            font-optical-sizing: auto;
+            font-style: normal;
+            font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 0;
+            background-color: #221716;
+            color: #E3E2E6;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+            height: 100%;
+            width: 100%;
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .google-sans-flex {
+            font-family: "Google Sans Flex", sans-serif;
+            font-optical-sizing: auto;
+            font-style: normal;
+        }
+        
+        #root {
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .masonry-grid {
+            column-gap: 1rem;
+        }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1rem;
+        }
+        @media (min-width: 768px) { .masonry-grid { column-count: 2; column-gap: 1.5rem; } .masonry-item { margin-bottom: 1.5rem; } }
+        @media (min-width: 1200px) { .masonry-grid { column-count: 3; } }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .material-symbols-rounded {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+<script>
+    window.process = { env: { NODE_ENV: 'production' } };
+    window.global = window;
+</script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai",
+    "@xenova/transformers": "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.js",
+    "@orama/orama": "https://esm.sh/@orama/orama@2.0.23",
+    "buffer": "https://esm.sh/buffer@6.0.3",
+    "long": "https://esm.sh/long@5.2.3"
+  }
+}
+</script>
+<script type="module">
+    import { Buffer } from 'buffer';
+    window.Buffer = Buffer;
+</script>
+</head>
+<body class="overflow-hidden">
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>
