@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Note, ThemeColors } from '../types';
 
@@ -22,7 +21,7 @@ const DataTransfer: React.FC<DataTransferProps> = ({ notes, onImport, theme, cla
     const link = document.createElement('a');
     const timestamp = new Date().toISOString().split('T')[0];
     link.href = url;
-    link.download = `note-forge-backup-${timestamp}.json`;
+    link.download = `escritoire-backup-${timestamp}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -51,7 +50,7 @@ const DataTransfer: React.FC<DataTransferProps> = ({ notes, onImport, theme, cla
         }
       } catch (err) {
         console.error("Import failed:", err);
-        alert("Failed to import notes. Please ensure the file is a valid note-forge export.");
+        alert("Failed to import notes. Please ensure the file is a valid escritoire export.");
       }
       if (fileInputRef.current) fileInputRef.current.value = '';
     };

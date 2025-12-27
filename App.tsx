@@ -72,6 +72,7 @@ const App: React.FC = () => {
   const [isReloadingEmbeddings, setIsReloadingEmbeddings] = useState(false);
   const [reloadProgress, setReloadProgress] = useState<{ current: number, total: number } | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
+  const [focusedNote, setFocusedNote] = useState<Note | null>(null);
 
   // Initialize Orama and Neural Model
   useEffect(() => {
@@ -214,9 +215,17 @@ const App: React.FC = () => {
     });
   };
 
+  const handleCloseFocus = useCallback(() => {
+    setFocusedNote(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   const deleteNote = (id: string) => {
     setNotes(prev => prev.filter(n => n.id !== id));
     setNoteToDelete(null);
+    if (focusedNote?.id === id) {
+      handleCloseFocus();
+    }
   };
 
   useEffect(() => {
@@ -272,11 +281,12 @@ const App: React.FC = () => {
       <style>{`
         @keyframes fizzle-blur-in { 0% { opacity: 0; transform: scale(0.99); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes staggered-materialize { 0% { transform: translateY(16px); filter: blur(10px); opacity: 0; } 100% { transform: translateY(0); filter: blur(0px); opacity: 1; } }
+        @keyframes spotlight-pop { 0% { transform: scale(0.95) translateY(10px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
         .anti-alias-container { perspective: 3000px; -webkit-font-smoothing: antialiased; }
         .anti-alias-item { will-change: transform, opacity; backface-visibility: hidden; }
       `}</style>
 
-      <header className={`pt-10 pb-6 px-5 max-w-5xl mx-auto flex items-center justify-between transition-opacity duration-400 ${isFocusMode ? 'opacity-10 blur-sm pointer-events-none' : 'opacity-100'}`}>
+      <header className={`pt-10 pb-6 px-5 max-w-5xl mx-auto flex items-center justify-between transition-opacity duration-400 ${isFocusMode || focusedNote ? 'opacity-10 blur-sm pointer-events-none' : 'opacity-100'}`}>
         <div className="flex flex-col">
           <h1 
             onClick={() => setLogoVarIdx(p => (p + 1) % LOGO_VARIATIONS.length)} 
@@ -294,7 +304,7 @@ const App: React.FC = () => {
                     {isReloadingEmbeddings ? 'Neural Rebuild' : 'Index Initializing'}
                 </span>
              ) : (
-                "INTELLIGENT KNOWLEDGE ENGINE"
+                "WRITING ASSISTANT"
              )}
           </div>
         </div>
@@ -305,7 +315,7 @@ const App: React.FC = () => {
       </header>
 
       <main className="px-5 max-w-5xl mx-auto">
-        <div className={`mb-10 relative group transition-opacity duration-400 ${isFocusMode ? 'opacity-10 blur-sm pointer-events-none' : 'opacity-100'}`}>
+        <div className={`mb-10 relative group transition-opacity duration-400 ${isFocusMode || focusedNote ? 'opacity-10 blur-sm pointer-events-none' : 'opacity-100'}`}>
           <div className={`absolute inset-y-0 left-6 flex items-center pointer-events-none ${theme.subtleText} group-focus-within:${theme.primaryText} transition-colors opacity-40`}>
             <span className="material-symbols-rounded">search</span>
           </div>
@@ -320,21 +330,21 @@ const App: React.FC = () => {
 
         <TheForge onSave={handleNoteSave} theme={theme} onFocusChange={setIsFocusMode} initialContent={editContent} isEditing={!!editingNoteId} onCancelEdit={() => setEditingNoteId(null)} />
 
-        <div className={`mt-10 transition-all duration-400 ${isFocusMode ? 'opacity-10 blur-sm pointer-events-none' : 'opacity-100'}`}>
+        <div className={`mt-10 transition-all duration-400 ${isFocusMode || focusedNote ? 'opacity-10 blur-sm pointer-events-none' : 'opacity-100'}`}>
           <div className="flex items-center gap-6 mb-8">
             <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${theme.subtleText} opacity-30`}>{searchQuery ? 'Neural Matching' : 'Recent Collections'}</span>
             <div className="h-[1px] flex-1 bg-white/5"></div>
           </div>
           <div className="masonry-grid">
             {filteredNotes.map(note => (
-              <div id={`note-${note.id}`} key={note.id} className="anti-alias-item">
-                <NoteCard note={note} onDelete={(id) => setNotes(p => p.filter(n => n.id !== id))} onUpdate={(id, up) => setNotes(p => p.map(n => n.id === id ? {...n, ...up} : n))} onEdit={(n) => {setEditingNoteId(n.id); setEditContent(n.content); window.scrollTo({top:0, behavior:'smooth'})}} theme={theme} />
+              <div id={`note-${note.id}`} key={note.id} className="masonry-item anti-alias-item">
+                <NoteCard note={note} onDelete={(id) => setNotes(p => p.filter(n => n.id !== id))} onUpdate={(id, up) => setNotes(p => p.map(n => n.id === id ? {...n, ...up} : n))} onEdit={(n) => {setEditingNoteId(n.id); setEditContent(n.content); window.scrollTo({top:0, behavior:'smooth'})}} onFocus={(n) => setFocusedNote(n)} theme={theme} isFocused={false} />
               </div>
             ))}
           </div>
         </div>
         
-        <div className={`transition-all duration-400 ${isFocusMode ? 'opacity-10 blur-sm pointer-events-none' : 'opacity-100'}`}>
+        <div className={`transition-all duration-400 ${isFocusMode || focusedNote ? 'opacity-10 blur-sm pointer-events-none' : 'opacity-100'}`}>
           <ContextManager modelTier={modelTier} onTierChange={setModelTier} theme={theme} />
           
           <div className="flex flex-row items-stretch justify-center gap-4 mt-8 mb-20 w-full">
@@ -402,8 +412,8 @@ const App: React.FC = () => {
                 return (
                   <div 
                     key={note.id} 
-                    onClick={() => scrollToNote(note.id)} 
-                    className={`${theme.surface} p-5 rounded-[1.5rem] cursor-pointer border border-white/10 transition-all hover:scale-[1.02] hover:shadow-2xl hover:brightness-110 flex flex-col gap-2 h-[180px] shadow-2xl anti-alias-item group relative overflow-hidden`} 
+                    onClick={() => { setShowOverview(false); setFocusedNote(note); }} 
+                    className={`${theme.surface} p-5 rounded-[2.5rem] cursor-pointer border border-white/10 transition-all hover:scale-[1.02] hover:shadow-2xl hover:brightness-110 flex flex-col gap-2 h-auto min-h-[140px] shadow-2xl anti-alias-item group relative overflow-hidden`} 
                     style={{ animation: `staggered-materialize 0.8s cubic-bezier(0.22, 1, 0.36, 1) ${index * 0.015}s both` }}
                   >
                     <div className="flex justify-between items-center flex-shrink-0 relative z-10">
@@ -429,6 +439,31 @@ const App: React.FC = () => {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {focusedNote && (
+        <div 
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/40 animate-in fade-in duration-300"
+          onClick={handleCloseFocus}
+        >
+          <div 
+            className="w-full max-w-2xl relative" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: 'spotlight-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+          >
+            <NoteCard 
+                note={focusedNote} 
+                onDelete={(id) => deleteNote(id)} 
+                onUpdate={(id, up) => {
+                  setNotes(p => p.map(n => n.id === id ? {...n, ...up} : n));
+                  setFocusedNote(prev => prev ? {...prev, ...up} : null);
+                }} 
+                onEdit={(n) => { handleCloseFocus(); setEditingNoteId(n.id); setEditContent(n.content); }} 
+                theme={theme} 
+                isFocused={true}
+            />
           </div>
         </div>
       )}

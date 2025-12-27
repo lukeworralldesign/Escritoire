@@ -1,11 +1,9 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AIReponse, ModelTier } from "../types";
 // @ts-ignore
 import { pipeline, env } from '@xenova/transformers';
 
 // Configure transformers.js for browser environment
-// This prevents the library from trying to find model files on the local server
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
@@ -21,13 +19,10 @@ export const setModelTier = (tier: ModelTier) => {
 export const initLocalEmbedder = async () => {
   if (localEmbedder) return localEmbedder;
   try {
-    // We force remote loading by setting env.allowLocalModels = false above.
-    // This model is used for local vector search (Orama).
     localEmbedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
     return localEmbedder;
   } catch (e) {
-    console.error("Local embedder initialization failed. This usually happens if the model CDN is unreachable or blocked.", e);
-    // Return null so the app gracefully degrades to standard text search
+    console.error("Local embedder initialization failed.", e);
     return null;
   }
 };
@@ -131,26 +126,52 @@ export const processNoteWithAI = async (content: string): Promise<AIReponse> => 
 export const reformatNoteContent = async (content: string): Promise<string> => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const pdfContext = getContextPDF();
     const modelName = currentTier === 'pro' ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
-    const parts: any[] = [];
-    if (pdfContext) {
-      parts.push({ inlineData: { mimeType: 'application/pdf', data: pdfContext } });
-      parts.push({ text: "Use the attached PDF as the authoritative source." });
-    }
-    parts.push({ text: `ORIGINAL NOTE: "${content}"` });
-
     const response = await ai.models.generateContent({
       model: modelName,
-      contents: [{ parts }],
+      contents: [{ text: `ORIGINAL NOTE: "${content}"` }],
       config: {
         systemInstruction: `Reformat notes in authoritative, concise encyclopedic style. 
-        No markdown, single paragraph. AUTHORITATIVE tone.`
+        No markdown, single paragraph. AUTHORITATIVE tone. No em-dashes (—).`
       }
     });
     return response.text || content;
   } catch (error) {
     console.error("Reformat failed", error);
     throw error;
+  }
+};
+
+/**
+ * Intelligently merges original content with a new addition, respecting previous chat constraints.
+ */
+export const synthesizeNoteContent = async (original: string, addition: string, conversationHistory: string = ""): Promise<string> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const modelName = currentTier === 'pro' ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
+    
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: [
+        { text: `ORIGINAL CONTENT: "${original}"` },
+        { text: `NEW INFORMATION TO INTEGRATE: "${addition}"` },
+        { text: `CONVERSATION CONTEXT: "${conversationHistory}"` }
+      ],
+      config: {
+        systemInstruction: `You are a Master Editor. Your task is to merge the ORIGINAL CONTENT with the NEW INFORMATION into a single, seamless, coherent, and authoritative encyclopedic entry. 
+        RULES:
+        - CRITICAL: If the user provided specific constraints (e.g., "limit to 50 words", "use bullet points", "change tone", "condense to X words") in the CONVERSATION CONTEXT, you MUST prioritize and adhere to those instructions in the final merged output.
+        - Identify and remove overlapping or duplicate information.
+        - Maintain a cohesive flow. 
+        - Preserve all unique facts from both inputs unless the user explicitly requested removal or shortening.
+        - Output a single, professional paragraph (unless user requested otherwise).
+        - Use AUTHORITATIVE tone. No markdown. No em-dashes (—).`
+      }
+    });
+    
+    return response.text?.trim() || `${original}\n\n${addition}`;
+  } catch (error) {
+    console.error("Synthesis failed", error);
+    return `${original}\n\n${addition}`;
   }
 };
